@@ -1,0 +1,15 @@
+file:
+	singular: file
+	plural: files
+	fields:
+		filename: string
+		origname: string
+		hash: string
+		type: string
+		title: string
+		description: text
+		status: 
+			Type: "enum('pending','processing','complete')"
+			Default: pending
+	extensions:
+		- taxonomy
