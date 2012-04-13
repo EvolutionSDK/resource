@@ -260,7 +260,7 @@ class Bundle extends SQLBundle {
 		else
 			$photo->resize($y, 'min');
 		
-		if($x !== null && $y !== null)
+		if($x !== null)
 			$photo->crop($x, $y > 0 ? $y : $x);
 
 		if($type === 'b64') return $photo->base64();
