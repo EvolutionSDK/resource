@@ -20,6 +20,8 @@ class Bundle extends SQLBundle {
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 	private $sources;
+	private $scan = true;
+	private $scanned = false;
 
 	/**
 	 * File upload errors based on key
@@ -52,9 +54,6 @@ class Bundle extends SQLBundle {
 		$sources->files		= $this->files();
 		$sources->all		= e\array_merge_recursive_simple($_REQUEST, array('files'=>$this->files()));
 
-		$scanner = new Scanner($sources->all);
-		$scanner->scan();
-
 		$this->sources = $sources;
 	}
 
@@ -63,6 +62,18 @@ class Bundle extends SQLBundle {
 	 * @author Kelly Becker
 	 */
 	public function __get($source) {
+		if($source === 'noscan') {
+			$this->scan = false;
+			return $this;
+		}
+
+		else if($this->scan && !$this->scanned) {
+			$scanner = new Scanner($this->sources->all);
+			$scanner->scan();
+			$this->scanned = true;
+		}
+
+		$this->scan = true;
 		return $this->sources->$source;
 	}
 
@@ -105,6 +116,21 @@ class Bundle extends SQLBundle {
 	# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 	/**
+	 * Get Files With Tag
+	 * @author Nate Ferrero
+	 * @author Kelly Becker
+	 */
+	public function getWithTag($map = false, $image = false) {
+		if(!$map) throw new Exception("No map specified to get all photos with tag.");
+
+		$file = $this->getFiles()
+			->_->taxonomy->hasTag($map);
+		
+		if($image) $file = $file->condition('`type` LIKE', 'image/%');
+		return $file;
+	}
+
+	/**
 	 * Handle File Downloads and Photos via URL
 	 * @author Nate Ferrero
 	 * @author Kelly Becler
@@ -138,7 +164,7 @@ class Bundle extends SQLBundle {
 		if(!isset($x) && !isset($y))
 			$x = 240;
 
-		$this->loadFile($map, isset($hash) ? $hash : null, isset($x) ? $x : null, isset($y) ? $y : null);
+		$this->loadFile($map, isset($hash) ? $hash : null, false, isset($x) ? $x : null, isset($y) ? $y : null);
 	}
 
 	/**
@@ -146,7 +172,7 @@ class Bundle extends SQLBundle {
 	 * @author Nate Ferrero
 	 * @author Kelly Becler
 	 */
-	public function loadFile($map, $hash = null, $x = null, $y = null) {
+	public function loadFile($map, $hash = null, $ret = false, $x = null, $y = null) {
 		$file = $this->getFiles()->_->taxonomy
 		->hasTag($map)->order('created_timestamp', 'DESC');
 		
@@ -155,11 +181,11 @@ class Bundle extends SQLBundle {
 
 		$file = $file->first();
 
-		$placehold = false;
+		if($ret) return $file;
 
+		$placehold = false;
 		if(!is_object($file) && empty($hash))
 			$placehold = true;
-
 		if(!is_file($file->filename) && strpos($file->type, 'image/') === 0)
 			$placehold = true;
 
