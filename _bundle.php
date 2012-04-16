@@ -256,7 +256,7 @@ class Bundle extends SQLBundle {
 		$photo = new Manipulator($file);
 
 		if($x > $y)
-			$photo->resize($x, 'min');
+			$photo->resize($x, 'max');
 		else
 			$photo->resize($y, 'min');
 		
