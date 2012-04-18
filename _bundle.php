@@ -174,7 +174,7 @@ class Bundle extends SQLBundle {
 	 */
 	public function loadFile($map, $hash = null, $ret = false, $x = null, $y = null) {
 		$file = $this->getFiles()->_->taxonomy
-		->hasTag($map)->order('created_timestamp', 'DESC');
+		->hasTag($map);
 		
 		if(empty($hash)) $file = $file->condition('`type` LIKE', 'image/%');
 		else $file = $file->condition('hash', $hash);
