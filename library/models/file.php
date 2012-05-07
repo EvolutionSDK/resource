@@ -16,7 +16,7 @@ class File extends Model {
 		/**
 		 * Create the Filename from the Owner map and a random hash
 		 */
-		$upload_dir = e::$environment->requireVar('resource.fileDir', '', "The absolute path to the upload directory for imports. (Recomended that this is outside the site directory)");
+		$upload_dir = e::$resource->requireDir();
 		$extension = '.'.pathinfo($file['name'], PATHINFO_EXTENSION);
 		$filename = $upload_dir.'/'.str_replace(':','_',$owner->__map()).'_'.md5(time().rand(10,99)).$extension;
 

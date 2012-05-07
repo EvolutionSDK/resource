@@ -39,6 +39,14 @@ class Bundle extends SQLBundle {
 	);
 
 	/**
+	 * Require the directory to save uploaded files
+	 * @author Kelly Becker
+	 */
+	public function requireDir() {
+		return e::$environment->requireVar('resource.fileDir', '', "Resource Bundle: The absolute path to the upload directory for imports. (Recomended that this is outside the site directory)");
+	}
+
+	/**
 	 * Retrieves the input arrays and sets them
 	 * to the source object
 	 * @author Kelly Becker
@@ -55,6 +63,11 @@ class Bundle extends SQLBundle {
 		$sources->all		= e\array_merge_recursive_simple($_REQUEST, array('files'=>$this->files()));
 
 		$this->sources = $sources;
+
+		/**
+		 * Require the upload directory to exist in the environments file
+		 */
+		$this->requireDir();
 	}
 
 	/**
