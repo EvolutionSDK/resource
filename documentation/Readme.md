@@ -16,3 +16,7 @@ Accessing GET, POST, FILES, Etc...
 Disabling XSS and Scanning
 ==========================
 If you need to disable XSS, Antivirus, etc. Use `e::$resource->noscan->post`
+
+Showing Files/Images
+====================
+You can access files by going to `/@resource/{bundle}/{model}/{id}/{hash}` if you leave out the hash it will show the last uploaded image for the model. If you want specific image dimensions you can add `/x:30` and `/y:20` etc. You can also replace the `@resource` by setting the environment variable `resource.path`. This field will not be prompted on use. It will only be present if you set it manually from the `/@manage` manager on the environment tile.
