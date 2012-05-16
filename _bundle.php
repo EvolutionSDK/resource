@@ -235,7 +235,7 @@ class Bundle extends SQLBundle {
 		/**
 		 * Ping external file storage bundle
 		 */
-		if(is_object($file) && strpos($file->filename, ':') !== FALSE) {
+		if(is_object($file) && (!is_file($file->filename) || strpos($file->filename, ':') !== FALSE)) {
 			$eventResponse = e::$events->loadFile($file->filename);
 
 			foreach($eventResponse as $event) {
@@ -331,7 +331,7 @@ class Bundle extends SQLBundle {
 			 * Render photo and output
 			 */
 			if(!isset($filename)) $filename = $file->filename;
-			$this->renderPhoto($file->filename, false, $x, $y);
+			$this->renderPhoto($filename, false, $x, $y);
 		}
 		
 		/**
