@@ -94,6 +94,37 @@ class File extends Model {
 		return $this;
 	}
 
+	public function delete() {
+
+		/**
+		 * Remove all tags
+		 */
+		$this->_->taxonomy->removeAllTags();
+
+		/**
+		 * Run a deletion event
+		 */
+		if(!is_file($file->filename) || strpos($file->filename, ':') !== FALSE) {
+			$eventResponse = e::$events->deleteFile($file->filename);
+
+			foreach($eventResponse as $event) {
+				if(empty($event)) continue;
+
+				$filename = $event['filename'];
+			}
+		}
+
+		/**
+		 * Delete the photo from the filesystem (if exists)
+		 */
+		unlink($photo->filename);
+
+		/**
+		 * Delete the photo from the db
+		 */
+		parent::delete();
+	}
+
 	public function url() {
 		$tags = $this->_->taxonomy->list();
 		dump($tags);
