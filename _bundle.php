@@ -143,12 +143,23 @@ class Bundle extends SQLBundle {
 		return $file;
 	}
 
+	public function _on_router_route($path) {
+		$override = e::$environment->getVar('resource.path', '', "Instead of accessing with /@resource you can use /your-path.");
+		if(empty($override)) return;
+
+		if($path[0] === $override) {
+			array_shift($path);
+			return $this->route($path);
+		}
+	}
+
 	/**
 	 * Handle File Downloads and Photos via URL
 	 * @author Nate Ferrero
 	 * @author Kelly Becler
 	 */
 	public function route($path) {
+
 		/**
 		 * Get the bundle, model, and id
 		 */
