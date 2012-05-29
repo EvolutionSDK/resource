@@ -12,6 +12,7 @@ class File extends Model {
 	 * @author: Kelly Lauren Summer Becker
 	 */
 	public function upload($file, $owner) {
+		dump($file);
 
 		/**
 		 * Create the Filename from the Owner map and a random hash
