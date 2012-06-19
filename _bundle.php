@@ -288,7 +288,7 @@ class Bundle extends SQLBundle {
 				 */
 				else {
 					$phash = "placehold.it";
-					$headers = getallheaders();
+					$headers = \getallheaders();
 
 					/**
 					 * Use HTTP cache headers to speed up display
