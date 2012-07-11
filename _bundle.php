@@ -39,6 +39,14 @@ class Bundle extends SQLBundle {
 	);
 
 	/**
+	 * Require the directory to save uploaded files
+	 * @author Kelly Becker
+	 */
+	public function requireDir() {
+		return e::$environment->requireVar('resource.fileDir', '', "Resource Bundle: The absolute path to the upload directory for imports. (Recomended that this is outside the site directory)");
+	}
+
+	/**
 	 * Retrieves the input arrays and sets them
 	 * to the source object
 	 * @author Kelly Becker
@@ -55,6 +63,11 @@ class Bundle extends SQLBundle {
 		$sources->all		= e\array_merge_recursive_simple($_REQUEST, array('files'=>$this->files()));
 
 		$this->sources = $sources;
+
+		/**
+		 * Require the upload directory to exist in the environments file
+		 */
+		$this->requireDir();
 	}
 
 	/**
@@ -130,18 +143,38 @@ class Bundle extends SQLBundle {
 		return $file;
 	}
 
+	public function _on_router_route($path) {
+		$override = e::$environment->getVar('resource.path', '', "Instead of accessing with /@resource you can use /your-path.");
+		if(empty($override)) return;
+
+		if($path[0] === $override) {
+			array_shift($path);
+			return $this->route($path);
+		}
+	}
+
 	/**
 	 * Handle File Downloads and Photos via URL
 	 * @author Nate Ferrero
 	 * @author Kelly Becler
 	 */
 	public function route($path) {
+
+		/**
+		 * Get the bundle, model, and id
+		 */
 		$bundle = array_shift($path);
 		$model = array_shift($path);
 		$id = array_shift($path);
 
+		/**
+		 * Turn it into a map
+		 */
 		$map = "$bundle.$model:$id";
 
+		/**
+		 * Get the image sizes/hash
+		 */
 		foreach($path as $seg) {
 			$var = substr($seg, 0, 1);
 			$check = substr($seg, 1, 1);
@@ -155,15 +188,27 @@ class Bundle extends SQLBundle {
 			$$var = $val;
 		}
 
+		/**
+		 * If x is set to auto ignore it
+		 */
 		if($x === 'auto')
 			unset($x);
 
+		/**
+		 * If y is set to auto ignore it
+		 */
 		if($y === 'auto')
 			unset($y);
 
+		/**
+		 * If neither x nor y are set, then make them 240
+		 */
 		if(!isset($x) && !isset($y))
 			$x = 240;
 
+		/**
+		 * Load the images / download the files
+		 */
 		$this->loadFile($map, isset($hash) ? $hash : null, false, isset($x) ? $x : null, isset($y) ? $y : null);
 	}
 
@@ -173,50 +218,111 @@ class Bundle extends SQLBundle {
 	 * @author Kelly Becler
 	 */
 	public function loadFile($map, $hash = null, $ret = false, $x = null, $y = null) {
-		$file = $this->getFiles()->_->taxonomy
-		->hasTag($map);
+		/**
+		 * Get the images associated with the map passed
+		 */
+		$file = $this->getFiles()->_->taxonomy->hasTag($map);
 		
+		/**
+		 * If there is no hash get the first image
+		 */
 		if(empty($hash)) $file = $file->condition('`type` LIKE', 'image/%');
+
+		/**
+		 * Otherwise get the file with hash specified
+		 */
 		else $file = $file->condition('hash', $hash);
 
+		/**
+		 * Return the first object
+		 */
 		$file = $file->first();
 
+		/**
+		 * If we just need to return then return the object
+		 */
 		if($ret) return $file;
 
-		$placehold = false;
-		if(!is_object($file) && empty($hash))
-			$placehold = true;
-		if(!is_file($file->filename) && strpos($file->type, 'image/') === 0)
-			$placehold = true;
+		/**
+		 * Ping external file storage bundle
+		 */
+		if(is_object($file) && (!is_file($file->filename) || strpos($file->filename, ':') !== FALSE)) {
+			$eventResponse = e::$events->loadFile($file->filename);
 
-		if($placehold) {
-			if(is_null($x) && is_null($y)) {
-				$x = 240;
-				$y = 240;
-			}
+			foreach($eventResponse as $event) {
+				if(empty($event)) continue;
 
-			else {
-				$phash = "placehold.it";
-				$headers = getallheaders();
-
-				if(isset($headers['If-None-Match']) && $headers['If-None-Match'] === $phash) {
-					header("HTTP/1.1 304 Not Modified");
-					exit;
-				}
-
-				header("ETag: {$phash}");
-				header("HTTP/1.1 307 Temporary Redirect");
-
-				if(is_null($x))
-					$x = $y;
-				if(is_null($y))
-					$y = $x;
-
-				header("Location: http://placehold.it/".$x."x".$y);
-				exit;
+				$filename = $event['filename'];
 			}
 		}
 
+		/**
+		 * Use local file storage
+		 */
+		if(!isset($filename)) {
+
+			/**
+			 * Do we need to show a placeholder
+			 */
+			$placehold = false;
+			if(!is_object($file) && empty($hash))
+				$placehold = true;
+			if(!is_file($file->filename) && strpos($file->type, 'image/') === 0)
+				$placehold = true;
+
+			/**
+			 * Show a place holder image
+			 */
+			if($placehold) {
+
+				/**
+				 * If no image dimensions are set defaults
+				 */
+				if(is_null($x) && is_null($y)) {
+					$x = 240;
+					$y = 240;
+				}
+
+				/**
+				 * Only show the placeholder if the dimensions are set
+				 */
+				else {
+					$phash = "placehold.it";
+					$headers = \getallheaders();
+
+					/**
+					 * Use HTTP cache headers to speed up display
+					 */
+					if(isset($headers['If-None-Match']) && $headers['If-None-Match'] === $phash) {
+						header("HTTP/1.1 304 Not Modified");
+						exit;
+					}
+
+					header("ETag: {$phash}");
+					header("HTTP/1.1 307 Temporary Redirect");
+
+					/**
+					 * If there are null values make square
+					 */
+					if(is_null($x))
+						$x = $y;
+					if(is_null($y))
+						$y = $x;
+
+					/**
+					 * Redirect to placehold.it
+					 */
+					header("Location: http://placehold.it/".$x."x".$y);
+					exit;
+				}
+
+			}
+
+		}
+
+		/**
+		 * If this is an image output here and now
+		 */
 		if(strpos($file->type, 'image/') === 0) {
 			
 			/**
@@ -232,15 +338,23 @@ class Bundle extends SQLBundle {
 
 			header("ETag: {$file->hash}");
 
-			$this->renderPhoto($file->filename, false, $x, $y);
+			/**
+			 * Render photo and output
+			 */
+			if(!isset($filename)) $filename = $file->filename;
+			$this->renderPhoto($filename, false, $x, $y);
 		}
-			
+		
+		/**
+		 * Start the file download
+		 */
 		else {
+			if(!isset($filename)) $filename = $file->filename;
 			header("Content-disposition: attachment; filename=".$file->origname);
-			header("Content-Length: ".filesize($file->filename));
+			header("Content-Length: ".filesize($filename));
 			header("Content-type: ".$file->type);
 			header("Pragma: no-cache");
-			readfile($file->filename);
+			readfile($filename);
 		}
 
 		e\disable_trace();
@@ -253,18 +367,34 @@ class Bundle extends SQLBundle {
 	 * @author Kelly Becler
 	 */
 	public function renderPhoto($file, $type = false, $x = null, $y = null) {
+
+		/**
+		 * Load the image into the manipulator
+		 */
 		$photo = new Manipulator($file);
 
+		/**
+		 * Resize the photos
+		 */
 		if($x > $y)
 			$photo->resize($x, 'max');
 		else
 			$photo->resize($y, 'min');
 		
+		/**
+		 * Crop the photo if needed
+		 */
 		if($x !== null && $y !== null)
 			$photo->crop($x, $y > 0 ? $y : $x);
 
+		/**
+		 * If a base64 is requested then return the image as b64 string
+		 */
 		if($type === 'b64') return $photo->base64();
 
+		/**
+		 * Else output the photo and die
+		 */
 		$photo->show();
 	}
 	

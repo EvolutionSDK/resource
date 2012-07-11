@@ -324,19 +324,25 @@ class Manipulator {
 
 	// Testing function
 	function show ($type = 'jpg') {
-			$types = array('jpg' => 'jpeg', 'png' => 'png');
-			if(!isset($types[$type])) die();
+		
+		$types = array(
+			'jpeg' => 'jpeg',
+			'jpg' => 'jpeg',
+			'png' => 'png'
+		);
+		
+		if(!isset($types[$type])) die();
 		header("Content-type: image/".$types[$type]);
-		//header('Content-type: image/jpeg');
 
 		//imageinterlace($this->current, 1);
+
 		switch($type) {
 			case 'jpg':
-				@imagejpeg($this->current, false, 75);
-				break;
+				@imagejpeg($this->current, null, 75);
+			break;
 			case 'png':
-				@imagepng($this->current, false);
-				break;
+				@imagepng($this->current, null);
+			break;
 		}
 	}
 
@@ -345,16 +351,22 @@ class Manipulator {
 	 * @author Kelly Becker
 	 */
 	function base64($type = 'jpg') {
-		$types = array('jpg' => 'jpeg', 'png' => 'png');
+
+		$types = array(
+			'jpeg' => 'jpeg',
+			'jpg' => 'jpeg',
+			'png' => 'png'
+		);
+		
 		if(!isset($types[$type])) die();
 
 		ob_start();
 		switch($type) {
 			case 'jpg':
-				@imagejpeg($this->current, false, 75);
+				@imagejpeg($this->current, null, 75);
 				break;
 			case 'png':
-				@imagepng($this->current, false);
+				@imagepng($this->current, null);
 				break;
 		}
 		$image = ob_get_contents();
