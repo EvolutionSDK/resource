@@ -312,7 +312,7 @@ class Bundle extends SQLBundle {
 					/**
 					 * Redirect to placehold.it
 					 */
-					header("Location: http://placehold.it/".$x."x".$y);
+					//header("Location: http://placehold.it/".$x."x".$y);
 					exit;
 				}
 
