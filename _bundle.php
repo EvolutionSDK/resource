@@ -203,8 +203,8 @@ class Bundle extends SQLBundle {
 		/**
 		 * If neither x nor y are set, then make them 240
 		 */
-		if(!isset($x) && !isset($y))
-			$x = 240;
+		/*if(!isset($x) && !isset($y))
+			$x = 240;*/
 
 		/**
 		 * Load the images / download the files
