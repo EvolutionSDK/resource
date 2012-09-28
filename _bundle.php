@@ -378,7 +378,7 @@ class Bundle extends SQLBundle {
 		 */
 		if($x > $y)
 			$photo->resize($x, 'max');
-		else
+		elseif($y)
 			$photo->resize($y, 'min');
 		
 		/**

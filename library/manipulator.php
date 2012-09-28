@@ -338,7 +338,7 @@ class Manipulator {
 
 		switch($type) {
 			case 'jpg':
-				@imagejpeg($this->current, null, 75);
+				@imagejpeg($this->current, null, 100);
 			break;
 			case 'png':
 				@imagepng($this->current, null);
