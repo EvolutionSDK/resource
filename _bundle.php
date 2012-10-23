@@ -61,6 +61,7 @@ class Bundle extends SQLBundle {
 		$sources->cookie	= $_COOKIE;
 		$sources->files		= $this->files();
 		$sources->all		= e\array_merge_recursive_simple($_REQUEST, array('files'=>$this->files()));
+		$sources->both		= e\array_merge_recursive_simple($_POST, $_GET);
 
 		$this->sources = $sources;
 
